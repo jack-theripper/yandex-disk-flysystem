@@ -14,7 +14,11 @@ namespace Arhitector\Yandex\Disk\Adapter;
 
 use Arhitector\Yandex\Disk as Client;
 use League\Flysystem\Adapter\AbstractAdapter;
+use League\Flysystem\FileExistsException;
+use League\Flysystem\FileNotFoundException;
 use League\Flysystem\Util;
+use Psr\Http\Message\StreamInterface;
+use Zend\Diactoros\Stream;
 
 /**
  * Адаптер для Flysystem.
@@ -84,7 +88,42 @@ class Flysystem extends AbstractAdapter
 	 */
 	public function write($path, $contents, \League\Flysystem\Config $config)
 	{
-		// TODO: Implement write() method.
+		$stream = fopen('php://temp', 'r+');
+
+		if (fwrite($stream, $contents) === false)
+		{
+			return false;
+		}
+
+		fseek($stream, 0);
+
+		try
+		{
+			$resource = $this->client->getResource($this->applyPathPrefix($path), 0);
+
+			if ( ! $resource->upload($stream, false))
+			{
+				return false;
+			}
+
+			$result = $this->normalizeResponse($resource);
+
+			if ($visibility = $config->get('visibility'))
+			{
+				if ($this->setVisibility($path, $visibility))
+				{
+					$result['visibility'] = $visibility;
+				}
+			}
+
+			return $result;
+		}
+		catch (\Exception $exc)
+		{
+
+		}
+
+		return false;
 	}
 
 	/**
@@ -100,7 +139,7 @@ class Flysystem extends AbstractAdapter
 	{
 		// TODO: Implement writeStream() method.
 	}
-
+	
 	/**
 	 * Update a file.
 	 *
@@ -136,10 +175,28 @@ class Flysystem extends AbstractAdapter
 	 * @param string $newpath
 	 *
 	 * @return bool
+	 * @throws FileExistsException
+	 * @throws FileNotFoundException
 	 */
 	public function rename($path, $newpath)
 	{
-		// TODO: Implement rename() method.
+		try
+		{
+			return (bool) $this->client->getResource($this->applyPathPrefix($path), 0)
+				->move($this->applyPathPrefix($newpath));
+		}
+		catch (\Arhitector\Yandex\Disk\Exception\AlreadyExistsException $exc)
+		{
+			throw new FileExistsException($newpath);
+		}
+		catch (\Arhitector\Yandex\Client\Exception\NotFoundException $exc)
+		{
+			throw new FileNotFoundException($path);
+		}
+		catch (\Exception $exc)
+		{
+			return false;
+		}
 	}
 
 	/**
@@ -149,10 +206,28 @@ class Flysystem extends AbstractAdapter
 	 * @param string $newpath
 	 *
 	 * @return bool
+	 * @throws FileExistsException
+	 * @throws FileNotFoundException
 	 */
 	public function copy($path, $newpath)
 	{
-		// TODO: Implement copy() method.
+		try
+		{
+			return (bool) $this->client->getResource($this->applyPathPrefix($path), 0)
+				->copy($this->applyPathPrefix($newpath));
+		}
+		catch (\Arhitector\Yandex\Disk\Exception\AlreadyExistsException $exc)
+		{
+			throw new FileExistsException($newpath);
+		}
+		catch (\Arhitector\Yandex\Client\Exception\NotFoundException $exc)
+		{
+			throw new FileNotFoundException($path);
+		}
+		catch (\Exception $exc)
+		{
+			return false;
+		}
 	}
 
 	/**
@@ -161,13 +236,18 @@ class Flysystem extends AbstractAdapter
 	 * @param string $path
 	 *
 	 * @return bool
+	 * @throws FileNotFoundException
 	 */
 	public function delete($path)
 	{
 		try
 		{
-			return $this->client->getResource($this->applyPathPrefix($path), 0)
+			return (bool) $this->client->getResource($this->applyPathPrefix($path), 0)
 				->delete();
+		}
+		catch (\Arhitector\Yandex\Client\Exception\NotFoundException $exc)
+		{
+			throw new FileNotFoundException($path);
 		}
 		catch (\Exception $exc)
 		{
@@ -278,7 +358,25 @@ class Flysystem extends AbstractAdapter
 	 */
 	public function read($path)
 	{
-		// TODO: Implement read() method.
+		try
+		{
+			$stream = new Stream('php://temp', 'r+');
+
+			if ($this->client->getResource($this->applyPathPrefix($path), 0)
+				->download($stream) !== false)
+			{
+				return [
+					'path' => $path,
+					'contents' => (string) $stream
+				];
+			}
+		}
+		catch (\Exception $exc)
+		{
+
+		}
+		
+		return false;
 	}
 
 	/**
@@ -290,7 +388,27 @@ class Flysystem extends AbstractAdapter
 	 */
 	public function readStream($path)
 	{
-		// TODO: Implement readStream() method.
+		try
+		{
+			$stream = fopen('php://temp', 'r+');
+
+			if ($this->client->getResource($this->applyPathPrefix($path), 0)
+				->download($stream) !== false)
+			{
+				fseek($stream, 0);
+
+				return [
+					'path' => $path,
+					'stream' => $stream
+				];
+			}
+		}
+		catch (\Exception $exc)
+		{
+
+		}
+
+		return false;
 	}
 
 	/**
