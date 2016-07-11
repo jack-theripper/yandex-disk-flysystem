@@ -130,14 +130,40 @@ class Flysystem extends AbstractAdapter
 	 * Write a new file using a stream.
 	 *
 	 * @param string                   $path
-	 * @param resource                 $resource
+	 * @param resource                 $handler
 	 * @param \League\Flysystem\Config $config Config object
 	 *
 	 * @return array|false false on failure file meta data on success
 	 */
-	public function writeStream($path, $resource, \League\Flysystem\Config $config)
+	public function writeStream($path, $handler, \League\Flysystem\Config $config)
 	{
-		// TODO: Implement writeStream() method.
+		try
+		{
+			$resource = $this->client->getResource($this->applyPathPrefix($path), 0);
+
+			if ( ! $resource->upload($handler, false))
+			{
+				return false;
+			}
+
+			$result = $this->normalizeResponse($resource);
+
+			if ($visibility = $config->get('visibility'))
+			{
+				if ($this->setVisibility($path, $visibility))
+				{
+					$result['visibility'] = $visibility;
+				}
+			}
+
+			return $result;
+		}
+		catch (\Exception $exc)
+		{
+			
+		}
+
+		return false;
 	}
 	
 	/**
