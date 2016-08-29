@@ -14,6 +14,7 @@ namespace Arhitector\Yandex\Disk\Adapter;
 
 use Arhitector\Yandex\Disk as Client;
 use League\Flysystem\Adapter\AbstractAdapter;
+use League\Flysystem\Config;
 use League\Flysystem\FileExistsException;
 use League\Flysystem\FileNotFoundException;
 use League\Flysystem\Util;
@@ -76,13 +77,13 @@ class Flysystem extends AbstractAdapter
 	/**
 	 * Write a new file.
 	 *
-	 * @param string                   $path
-	 * @param string                   $contents
-	 * @param \League\Flysystem\Config $config Config object
+	 * @param string $path
+	 * @param string $contents
+	 * @param Config $config Config object
 	 *
 	 * @return array|false false on failure file meta data on success
 	 */
-	public function write($path, $contents, \League\Flysystem\Config $config)
+	public function write($path, $contents, Config $config)
 	{
 		$stream = fopen('php://temp', 'r+');
 		
@@ -96,6 +97,7 @@ class Flysystem extends AbstractAdapter
 		try
 		{
 			$resource = $this->client->getResource($this->applyPathPrefix($path), 0);
+			$this->applyEvents($resource, $config);
 			
 			if ( ! $resource->upload($stream, false))
 			{
@@ -125,17 +127,18 @@ class Flysystem extends AbstractAdapter
 	/**
 	 * Write a new file using a stream.
 	 *
-	 * @param string                   $path
-	 * @param resource                 $handler
-	 * @param \League\Flysystem\Config $config Config object
+	 * @param string   $path
+	 * @param resource $handler
+	 * @param Config   $config Config object
 	 *
 	 * @return array|false false on failure file meta data on success
 	 */
-	public function writeStream($path, $handler, \League\Flysystem\Config $config)
+	public function writeStream($path, $handler, Config $config)
 	{
 		try
 		{
 			$resource = $this->client->getResource($this->applyPathPrefix($path), 0);
+			$this->applyEvents($resource, $config);
 			
 			if ( ! $resource->upload($handler, false))
 			{
@@ -165,13 +168,13 @@ class Flysystem extends AbstractAdapter
 	/**
 	 * Update a file.
 	 *
-	 * @param string                   $path
-	 * @param string                   $contents
-	 * @param \League\Flysystem\Config $config Config object
+	 * @param string $path
+	 * @param string $contents
+	 * @param Config $config Config object
 	 *
 	 * @return array|false false on failure file meta data on success
 	 */
-	public function update($path, $contents, \League\Flysystem\Config $config)
+	public function update($path, $contents, Config $config)
 	{
 		// TODO: Implement update() method.
 	}
@@ -179,13 +182,13 @@ class Flysystem extends AbstractAdapter
 	/**
 	 * Update a file using a stream.
 	 *
-	 * @param string                   $path
-	 * @param resource                 $resource
-	 * @param \League\Flysystem\Config $config Config object
+	 * @param string   $path
+	 * @param resource $resource
+	 * @param Config   $config Config object
 	 *
 	 * @return array|false false on failure file meta data on success
 	 */
-	public function updateStream($path, $resource, \League\Flysystem\Config $config)
+	public function updateStream($path, $resource, Config $config)
 	{
 		// TODO: Implement updateStream() method.
 	}
@@ -292,17 +295,18 @@ class Flysystem extends AbstractAdapter
 	/**
 	 * Create a directory.
 	 *
-	 * @param string                   $dirname directory name
-	 * @param \League\Flysystem\Config $config
+	 * @param string $dirname directory name
+	 * @param Config $config
 	 *
 	 * @return array|false
 	 */
-	public function createDir($dirname, \League\Flysystem\Config $config)
+	public function createDir($dirname, Config $config)
 	{
 		try
 		{
-			$resource = $this->client->getResource($this->applyPathPrefix($dirname), 0)
-				->create();
+			$resource = $this->client->getResource($this->applyPathPrefix($dirname), 0);
+			$this->applyEvents($resource, $config);
+			$resource->create();
 			
 			if ($resource->has())
 			{
@@ -591,6 +595,30 @@ class Flysystem extends AbstractAdapter
 		$normalized['dirname'] = Util::normalizeDirname($normalized['dirname']);
 		
 		return $normalized;
+	}
+	
+	/**
+	 * Apply events.
+	 *
+	 * @param Client\AbstractResource $resource
+	 * @param Config                  $config
+	 *
+	 * @return Client\AbstractResource
+	 */
+	protected function applyEvents(Client\AbstractResource $resource, Config $config)
+	{
+		if ($config->has('events'))
+		{
+			foreach ((array) $config->get('events') as $event => $listeners)
+			{
+				foreach ((array) $listeners as $listener)
+				{
+					$resource->addListener($event, $listener);
+				}
+			}
+		}
+		
+		return $resource;
 	}
 	
 	/**
