@@ -17,39 +17,37 @@ use League\Flysystem\Adapter\AbstractAdapter;
 use League\Flysystem\FileExistsException;
 use League\Flysystem\FileNotFoundException;
 use League\Flysystem\Util;
-use Psr\Http\Message\StreamInterface;
 use Zend\Diactoros\Stream;
 
 /**
- * Адаптер для Flysystem.
- * Adapter Flysystem.
+ * The flysystem adapter.
  *
  * @package Arhitector\Yandex\Disk\Adapter
  */
 class Flysystem extends AbstractAdapter
 {
-
+	
 	/**
 	 * @const   application folder
 	 */
 	const PREFIX_APP = 'app:/';
-
+	
 	/**
 	 * @const   all drive
 	 */
 	const PREFIX_FULL = 'disk:/';
-
+	
 	/**
 	 * @var Client
 	 */
 	protected $client;
-
+	
 	/**
 	 * @deprecated
 	 * @var Client\Resource\Closed
 	 */
 	protected $resource;
-
+	
 	/**
 	 * @deprecated
 	 * @var array
@@ -57,26 +55,24 @@ class Flysystem extends AbstractAdapter
 	protected $mapProperties = [
 		'mime_type' => 'mimetype'
 	];
-
+	
 	/**
-	 * Конструктор.
 	 * Constructor.
 	 *
 	 * @param Client $client
-	 * @param string $prefix    Может быть "disk:/" или "app:/"
-	 *                          Possible values "disk:/" or "app:/"
+	 * @param string $prefix Possible values "disk:/" or "app:/"
 	 */
 	public function __construct(Client $client, $prefix = self::PREFIX_FULL)
 	{
 		if ( ! $client->getAccessToken())
 		{
-			throw new \InvalidArgumentException('Установите Access Token.');
+			throw new \InvalidArgumentException('Set the access token.');
 		}
-
+		
 		$this->client = $client;
 		$this->setPathPrefix($prefix);
 	}
-
+	
 	/**
 	 * Write a new file.
 	 *
@@ -89,25 +85,25 @@ class Flysystem extends AbstractAdapter
 	public function write($path, $contents, \League\Flysystem\Config $config)
 	{
 		$stream = fopen('php://temp', 'r+');
-
+		
 		if (fwrite($stream, $contents) === false)
 		{
 			return false;
 		}
-
+		
 		fseek($stream, 0);
-
+		
 		try
 		{
 			$resource = $this->client->getResource($this->applyPathPrefix($path), 0);
-
+			
 			if ( ! $resource->upload($stream, false))
 			{
 				return false;
 			}
-
+			
 			$result = $this->normalizeResponse($resource);
-
+			
 			if ($visibility = $config->get('visibility'))
 			{
 				if ($this->setVisibility($path, $visibility))
@@ -115,17 +111,17 @@ class Flysystem extends AbstractAdapter
 					$result['visibility'] = $visibility;
 				}
 			}
-
+			
 			return $result;
 		}
 		catch (\Exception $exc)
 		{
-
+			
 		}
-
+		
 		return false;
 	}
-
+	
 	/**
 	 * Write a new file using a stream.
 	 *
@@ -140,14 +136,14 @@ class Flysystem extends AbstractAdapter
 		try
 		{
 			$resource = $this->client->getResource($this->applyPathPrefix($path), 0);
-
+			
 			if ( ! $resource->upload($handler, false))
 			{
 				return false;
 			}
-
+			
 			$result = $this->normalizeResponse($resource);
-
+			
 			if ($visibility = $config->get('visibility'))
 			{
 				if ($this->setVisibility($path, $visibility))
@@ -155,14 +151,14 @@ class Flysystem extends AbstractAdapter
 					$result['visibility'] = $visibility;
 				}
 			}
-
+			
 			return $result;
 		}
 		catch (\Exception $exc)
 		{
 			
 		}
-
+		
 		return false;
 	}
 	
@@ -179,7 +175,7 @@ class Flysystem extends AbstractAdapter
 	{
 		// TODO: Implement update() method.
 	}
-
+	
 	/**
 	 * Update a file using a stream.
 	 *
@@ -193,7 +189,7 @@ class Flysystem extends AbstractAdapter
 	{
 		// TODO: Implement updateStream() method.
 	}
-
+	
 	/**
 	 * Rename a file.
 	 *
@@ -224,7 +220,7 @@ class Flysystem extends AbstractAdapter
 			return false;
 		}
 	}
-
+	
 	/**
 	 * Copy a file.
 	 *
@@ -255,7 +251,7 @@ class Flysystem extends AbstractAdapter
 			return false;
 		}
 	}
-
+	
 	/**
 	 * Delete a file.
 	 *
@@ -280,7 +276,7 @@ class Flysystem extends AbstractAdapter
 			return false;
 		}
 	}
-
+	
 	/**
 	 * Delete a directory.
 	 *
@@ -292,7 +288,7 @@ class Flysystem extends AbstractAdapter
 	{
 		return $this->delete($dirname);
 	}
-
+	
 	/**
 	 * Create a directory.
 	 *
@@ -307,74 +303,73 @@ class Flysystem extends AbstractAdapter
 		{
 			$resource = $this->client->getResource($this->applyPathPrefix($dirname), 0)
 				->create();
-
+			
 			if ($resource->has())
 			{
 				if ($config->has('visibility') && $config->get('visibility') == 'public')
 				{
 					$resource->setPublish(true);
 				}
-
+				
 				return $this->normalizeResponse($resource);
 			}
 		}
 		catch (\Exception $exc)
 		{
-
+			
 		}
-
+		
 		return false;
 	}
-
+	
 	/**
 	 * Set the visibility for a file.
 	 *
 	 * @param string $path
 	 * @param string $visibility
 	 *
-	 * @return array|false file meta data
+	 * @return bool
 	 */
 	public function setVisibility($path, $visibility)
 	{
 		if ($visibility != 'public' && $visibility != 'private')
 		{
-			return false;	
+			return false;
 		}
 		
 		try
 		{
 			$resource = $this->client->getResource($this->applyPathPrefix($path), 0);
-
-			if (($visibility == 'public' && $resource->isPublish())
-				|| ($visibility == 'private' && ! $resource->isPublish())
-			)
+			
+			if (($visibility == 'public' && $resource->isPublish()) || ($visibility == 'private' && ! $resource->isPublish()))
 			{
 				return true;
 			}
-
+			
 			return $resource->setPublish($visibility == 'public') instanceof Client\Resource\Opened;
 		}
 		catch (\Exception $exc)
 		{
-
+			
 		}
-
+		
 		return false;
 	}
-
+	
 	/**
 	 * Проверить, существует ли файл.
 	 * Check whether a file exists.
 	 *
 	 * @param string $path
 	 *
-	 * @return array|bool|null
+	 * @return bool
 	 */
 	public function has($path)
 	{
-		return $this->client->getResource($this->applyPathPrefix($path), 0)->has();
+		return $this->client->getResource($this->applyPathPrefix($path), 0)
+			->has();
 	}
-
+	
 	/**
 	 * Read a file.
 	 *
@@ -387,24 +382,25 @@ class Flysystem extends AbstractAdapter
 		try
 		{
 			$stream = new Stream('php://temp', 'r+');
-
+			
 			if ($this->client->getResource($this->applyPathPrefix($path), 0)
-				->download($stream) !== false)
+					->download($stream) !== false
+			)
 			{
 				return [
-					'path' => $path,
+					'path'     => $path,
 					'contents' => (string) $stream
 				];
 			}
 		}
 		catch (\Exception $exc)
 		{
-
+			
 		}
 		
 		return false;
 	}
-
+	
 	/**
 	 * Read a file as a stream.
 	 *
@@ -417,26 +413,27 @@ class Flysystem extends AbstractAdapter
 		try
 		{
 			$stream = fopen('php://temp', 'r+');
-
+			
 			if ($this->client->getResource($this->applyPathPrefix($path), 0)
-				->download($stream) !== false)
+					->download($stream) !== false
+			)
 			{
 				fseek($stream, 0);
-
+				
 				return [
-					'path' => $path,
+					'path'   => $path,
 					'stream' => $stream
 				];
 			}
 		}
 		catch (\Exception $exc)
 		{
-
+			
 		}
-
+		
 		return false;
 	}
-
+	
 	/**
 	 * Вывести содержимое каталога.
 	 * List contents of a directory.
@@ -453,16 +450,16 @@ class Flysystem extends AbstractAdapter
 		try
 		{
 			$resource = $this->client->getResource($this->applyPathPrefix(trim($directory, '/. ')), 100);
-
+			
 			if ( ! $resource->isDir())
 			{
 				return [];
 			}
-
+			
 			$total_count = $resource->get('total', $resource->items->count());
 			$iterations = ceil($total_count / 100);
 			$iteration = 1;
-
+			
 			do
 			{
 				/**
@@ -471,27 +468,26 @@ class Flysystem extends AbstractAdapter
 				foreach ($resource->items as $item)
 				{
 					$listing[] = $this->normalizeResponse($item);
-
+					
 					if ($recursive && $item->isDir())
 					{
 						$listing = array_merge($listing,
 							$this->listContents($this->removePathPrefix($item->getPath()), true));
 					}
 				}
-
+				
 				$resource->setOffset($resource->get('limit', 0) * $iteration);
 				++$iteration;
-			}
-			while ($iteration <= $iterations);
+			} while ($iteration <= $iterations);
 		}
 		catch (\Exception $exc)
 		{
 			return [];
 		}
-
+		
 		return $listing;
 	}
-
+	
 	/**
 	 * Получить все метаданные файла или каталога.
 	 * Get all the meta data of a file or directory.
@@ -523,7 +519,7 @@ class Flysystem extends AbstractAdapter
 	{
 		return $this->getMetadata($path);
 	}
-
+	
 	/**
 	 * Get the mimetype of a file.
 	 *
@@ -534,17 +530,17 @@ class Flysystem extends AbstractAdapter
 	public function getMimetype($path)
 	{
 		$metadata = $this->getMetadata($path);
-
+		
 		if (isset($metadata['mime_type']))
 		{
 			return [
 				'mimetype' => $metadata['mime_type']
 			];
 		}
-
+		
 		return false;
 	}
-
+	
 	/**
 	 * Get the timestamp of a file.
 	 *
@@ -556,7 +552,7 @@ class Flysystem extends AbstractAdapter
 	{
 		return $this->getMetadata($path);
 	}
-
+	
 	/**
 	 * Get the visibility of a file.
 	 *
@@ -568,9 +564,8 @@ class Flysystem extends AbstractAdapter
 	{
 		return $this->getMetadata($path);
 	}
-
+	
 	/**
-	 * Привести ответ от Яндекс.Диска в требуемый формат.
 	 * Normalize a Yandex.Disk response.
 	 *
 	 * @param Client\AbstractResource $resource
@@ -585,19 +580,19 @@ class Flysystem extends AbstractAdapter
 			'timestamp'  => strtotime($resource->get('modified', '')),
 			'visibility' => $resource->isPublish() ? 'public' : 'private'
 		];
-
+		
 		$normalized = array_merge($resource->toArray(), $normalized, pathinfo($normalized['path']));
-
+		
 		if ($normalized['type'] == 'file')
 		{
 			$normalized['size'] = $resource->size;
 		}
-
+		
 		$normalized['dirname'] = Util::normalizeDirname($normalized['dirname']);
-
+		
 		return $normalized;
 	}
-
+	
 	/**
 	 * Если ранее этот ресурс кэшировался, получить его.
 	 * Get the resource from the cache.
@@ -614,7 +609,7 @@ class Flysystem extends AbstractAdapter
 		{
 			return $this->resource;
 		}
-
+		
 		return false;
 	}
 	
