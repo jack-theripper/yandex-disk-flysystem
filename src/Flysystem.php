@@ -192,14 +192,32 @@ class Flysystem extends AbstractAdapter
 	 * Update a file using a stream.
 	 *
 	 * @param string   $path
-	 * @param resource $resource
+	 * @param resource $handler
 	 * @param Config   $config Config object
 	 *
 	 * @return array|false false on failure file meta data on success
 	 */
-	public function updateStream($path, $resource, Config $config)
+	public function updateStream($path, $handler, Config $config)
 	{
-		// TODO: Implement updateStream() method.
+		$resource = $this->client->getResource($this->applyPathPrefix($path), 0);
+		$this->applyEvents($resource, $config);
+		
+		if ( ! $resource->upload($handler, true))
+		{
+			return false;
+		}
+		
+		$result = $this->normalizeResponse($resource);
+		
+		if ($visibility = $config->get('visibility'))
+		{
+			if ($this->setVisibility($path, $visibility))
+			{
+				$result['visibility'] = $visibility;
+			}
+		}
+		
+		return $result;
 	}
 	
 	/**
