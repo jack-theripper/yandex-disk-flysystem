@@ -94,34 +94,25 @@ class Flysystem extends AbstractAdapter
 		
 		fseek($stream, 0);
 		
-		try
+		$resource = $this->client->getResource($this->applyPathPrefix($path), 0);
+		$this->applyEvents($resource, $config);
+		
+		if ( ! $resource->upload($stream, false))
 		{
-			$resource = $this->client->getResource($this->applyPathPrefix($path), 0);
-			$this->applyEvents($resource, $config);
-			
-			if ( ! $resource->upload($stream, false))
-			{
-				return false;
-			}
-			
-			$result = $this->normalizeResponse($resource);
-			
-			if ($visibility = $config->get('visibility'))
-			{
-				if ($this->setVisibility($path, $visibility))
-				{
-					$result['visibility'] = $visibility;
-				}
-			}
-			
-			return $result;
-		}
-		catch (\Exception $exc)
-		{
-			
+			return false;
 		}
 		
-		return false;
+		$result = $this->normalizeResponse($resource);
+		
+		if ($visibility = $config->get('visibility'))
+		{
+			if ($this->setVisibility($path, $visibility))
+			{
+				$result['visibility'] = $visibility;
+			}
+		}
+		
+		return $result;
 	}
 	
 	/**
@@ -135,34 +126,25 @@ class Flysystem extends AbstractAdapter
 	 */
 	public function writeStream($path, $handler, Config $config)
 	{
-		try
+		$resource = $this->client->getResource($this->applyPathPrefix($path), 0);
+		$this->applyEvents($resource, $config);
+		
+		if ( ! $resource->upload($handler, false))
 		{
-			$resource = $this->client->getResource($this->applyPathPrefix($path), 0);
-			$this->applyEvents($resource, $config);
-			
-			if ( ! $resource->upload($handler, false))
-			{
-				return false;
-			}
-			
-			$result = $this->normalizeResponse($resource);
-			
-			if ($visibility = $config->get('visibility'))
-			{
-				if ($this->setVisibility($path, $visibility))
-				{
-					$result['visibility'] = $visibility;
-				}
-			}
-			
-			return $result;
-		}
-		catch (\Exception $exc)
-		{
-			
+			return false;
 		}
 		
-		return false;
+		$result = $this->normalizeResponse($resource);
+		
+		if ($visibility = $config->get('visibility'))
+		{
+			if ($this->setVisibility($path, $visibility))
+			{
+				$result['visibility'] = $visibility;
+			}
+		}
+		
+		return $result;
 	}
 	
 	/**
@@ -218,10 +200,6 @@ class Flysystem extends AbstractAdapter
 		{
 			throw new FileNotFoundException($path);
 		}
-		catch (\Exception $exc)
-		{
-			return false;
-		}
 	}
 	
 	/**
@@ -249,10 +227,6 @@ class Flysystem extends AbstractAdapter
 		{
 			throw new FileNotFoundException($path);
 		}
-		catch (\Exception $exc)
-		{
-			return false;
-		}
 	}
 	
 	/**
@@ -273,10 +247,6 @@ class Flysystem extends AbstractAdapter
 		catch (\Arhitector\Yandex\Client\Exception\NotFoundException $exc)
 		{
 			throw new FileNotFoundException($path);
-		}
-		catch (\Exception $exc)
-		{
-			return false;
 		}
 	}
 	
@@ -302,28 +272,19 @@ class Flysystem extends AbstractAdapter
 	 */
 	public function createDir($dirname, Config $config)
 	{
-		try
-		{
-			$resource = $this->client->getResource($this->applyPathPrefix($dirname), 0);
-			$this->applyEvents($resource, $config);
-			$resource->create();
-			
-			if ($resource->has())
-			{
-				if ($config->has('visibility') && $config->get('visibility') == 'public')
-				{
-					$resource->setPublish(true);
-				}
-				
-				return $this->normalizeResponse($resource);
-			}
-		}
-		catch (\Exception $exc)
-		{
-			
-		}
+		$resource = $this->client->getResource($this->applyPathPrefix($dirname), 0);
+		$this->applyEvents($resource, $config);
+		$resource->create();
 		
-		return false;
+		if ($resource->has())
+		{
+			if ($config->has('visibility') && $config->get('visibility') == 'public')
+			{
+				$resource->setPublish(true);
+			}
+			
+			return $this->normalizeResponse($resource);
+		}
 	}
 	
 	/**
@@ -341,23 +302,14 @@ class Flysystem extends AbstractAdapter
 			return false;
 		}
 		
-		try
+		$resource = $this->client->getResource($this->applyPathPrefix($path), 0);
+		
+		if (($visibility == 'public' && $resource->isPublish()) || ($visibility == 'private' && ! $resource->isPublish()))
 		{
-			$resource = $this->client->getResource($this->applyPathPrefix($path), 0);
-			
-			if (($visibility == 'public' && $resource->isPublish()) || ($visibility == 'private' && ! $resource->isPublish()))
-			{
-				return true;
-			}
-			
-			return $resource->setPublish($visibility == 'public') instanceof Client\Resource\Opened;
-		}
-		catch (\Exception $exc)
-		{
-			
+			return true;
 		}
 		
-		return false;
+		return $resource->setPublish($visibility == 'public') instanceof Client\Resource\Opened;
 	}
 	
 	/**
@@ -383,26 +335,17 @@ class Flysystem extends AbstractAdapter
 	 */
 	public function read($path)
 	{
-		try
-		{
-			$stream = new Stream('php://temp', 'r+');
-			
-			if ($this->client->getResource($this->applyPathPrefix($path), 0)
-					->download($stream) !== false
-			)
-			{
-				return [
-					'path'     => $path,
-					'contents' => (string) $stream
-				];
-			}
-		}
-		catch (\Exception $exc)
-		{
-			
-		}
+		$stream = new Stream('php://temp', 'r+');
 		
-		return false;
+		if ($this->client->getResource($this->applyPathPrefix($path), 0)
+				->download($stream) !== false
+		)
+		{
+			return [
+				'path'     => $path,
+				'contents' => (string) $stream
+			];
+		}
 	}
 	
 	/**
@@ -414,28 +357,19 @@ class Flysystem extends AbstractAdapter
 	 */
 	public function readStream($path)
 	{
-		try
-		{
-			$stream = fopen('php://temp', 'r+');
-			
-			if ($this->client->getResource($this->applyPathPrefix($path), 0)
-					->download($stream) !== false
-			)
-			{
-				fseek($stream, 0);
-				
-				return [
-					'path'   => $path,
-					'stream' => $stream
-				];
-			}
-		}
-		catch (\Exception $exc)
-		{
-			
-		}
+		$stream = fopen('php://temp', 'r+');
 		
-		return false;
+		if ($this->client->getResource($this->applyPathPrefix($path), 0)
+				->download($stream) !== false
+		)
+		{
+			fseek($stream, 0);
+			
+			return [
+				'path'   => $path,
+				'stream' => $stream
+			];
+		}
 	}
 	
 	/**
