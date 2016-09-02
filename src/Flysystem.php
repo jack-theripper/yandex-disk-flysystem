@@ -158,7 +158,34 @@ class Flysystem extends AbstractAdapter
 	 */
 	public function update($path, $contents, Config $config)
 	{
-		// TODO: Implement update() method.
+		$stream = fopen('php://temp', 'r+');
+		
+		if (fwrite($stream, $contents) === false)
+		{
+			return false;
+		}
+		
+		fseek($stream, 0);
+		
+		$resource = $this->client->getResource($this->applyPathPrefix($path), 0);
+		$this->applyEvents($resource, $config);
+		
+		if ( ! $resource->upload($stream, true))
+		{
+			return false;
+		}
+		
+		$result = $this->normalizeResponse($resource);
+		
+		if ($visibility = $config->get('visibility'))
+		{
+			if ($this->setVisibility($path, $visibility))
+			{
+				$result['visibility'] = $visibility;
+			}
+		}
+		
+		return $result;
 	}
 	
 	/**
@@ -416,6 +443,7 @@ class Flysystem extends AbstractAdapter
 				
 				$resource->setOffset($resource->get('limit', 0) * $iteration);
 				++$iteration;
+				
 			} while ($iteration <= $iterations);
 		}
 		catch (\Exception $exc)
