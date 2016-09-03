@@ -317,19 +317,28 @@ class Flysystem extends AbstractAdapter
 	 */
 	public function createDir($dirname, Config $config)
 	{
-		$resource = $this->client->getResource($this->applyPathPrefix($dirname), 0);
-		$this->applyEvents($resource, $config);
-		$resource->create();
-		
-		if ($resource->has())
+		try
 		{
-			if ($config->has('visibility') && $config->get('visibility') == 'public')
-			{
-				$resource->setPublish(true);
-			}
+			$resource = $this->client->getResource($this->applyPathPrefix($dirname), 0);
+			$this->applyEvents($resource, $config);
+			$resource->create();
 			
-			return $this->normalizeResponse($resource);
+			if ($resource->has())
+			{
+				if ($config->has('visibility') && $config->get('visibility') == 'public')
+				{
+					$resource->setPublish(true);
+				}
+				
+				return $this->normalizeResponse($resource);
+			}
 		}
+		catch (\Exception $exc)
+		{
+			
+		}
+		
+		return false;
 	}
 	
 	/**
