@@ -10,7 +10,6 @@
 		"cloud",
 		"cloud files"
 	],
-	"minimum-stability": "stable",
 	"license": "MIT",
 	"authors": [
 		{
@@ -24,7 +23,7 @@
 		}
 	},
 	"require": {
-		"arhitector/yandex": "dev-master",
+		"arhitector/yandex": "^2.0-dev",
 		"league/flysystem": "^1.0"
 	}
 }
