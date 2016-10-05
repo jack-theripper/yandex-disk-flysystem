@@ -23,7 +23,7 @@
 		}
 	},
 	"require": {
-		"arhitector/yandex": "^2.0-dev",
+		"arhitector/yandex": "~2.0",
 		"league/flysystem": "^1.0"
 	}
 }
