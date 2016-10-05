@@ -56,7 +56,7 @@ var_dump($contents);
 ```php
 $filesystem->write('path', 'contents', [
     'events' => [
-        'event-name 1' => 'listener', /* function, etc. /*
+        'event-name 1' => 'listener', /* function, etc. */
         'event-name 2' => 'other listener'
     ]
 ]);
@@ -68,9 +68,9 @@ $filesystem->write('path', 'contents', [
 $filesystem->write('path', 'contents', [
     'events' => [
         'event-name' => [
-            'listener 1' /* function, etc. /*,
-            'listener 2' /* function, etc. /*,
-            'listener 3' /* function, etc. /*
+            'listener 1' /* function, etc. */,
+            'listener 2' /* function, etc. */,
+            'listener 3' /* function, etc. */
         ]
     ]
 ]);
