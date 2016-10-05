@@ -44,20 +44,6 @@ class Flysystem extends AbstractAdapter
 	protected $client;
 	
 	/**
-	 * @deprecated
-	 * @var Client\Resource\Closed
-	 */
-	protected $resource;
-	
-	/**
-	 * @deprecated
-	 * @var array
-	 */
-	protected $mapProperties = [
-		'mime_type' => 'mimetype'
-	];
-	
-	/**
 	 * Constructor.
 	 *
 	 * @param Client $client
@@ -627,26 +613,6 @@ class Flysystem extends AbstractAdapter
 		}
 		
 		return $resource;
-	}
-	
-	/**
-	 * Если ранее этот ресурс кэшировался, получить его.
-	 * Get the resource from the cache.
-	 *
-	 * @deprecated  не используется.
-	 *
-	 * @param $path
-	 *
-	 * @return Client\Resource\Closed|bool
-	 */
-	protected function getCachedResource($path)
-	{
-		if ( ! empty($this->resource) && $this->resource->getPath() == $path)
-		{
-			return $this->resource;
-		}
-		
-		return false;
 	}
 	
 }
