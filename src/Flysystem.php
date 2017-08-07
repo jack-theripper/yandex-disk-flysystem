@@ -273,7 +273,7 @@ class Flysystem extends AbstractAdapter
 		try
 		{
 			return (bool) $this->client->getResource($this->applyPathPrefix($path), 0)
-				->delete();
+				->delete(true);
 		}
 		catch (\Arhitector\Yandex\Client\Exception\NotFoundException $exc)
 		{
