@@ -311,9 +311,13 @@ class Flysystem extends AbstractAdapter
 			$path = '';
 			foreach ($directories as $directory) {
 				$path.= $directory . '/';
-				$resource = $this->client->getResource($this->applyPathPrefix($path), 0);
-				$this->applyEvents($resource, $config);
-				$resource->create();
+				$fullPath = $this->applyPathPrefix($path);
+				$resource = $this->client->getResource($fullPath, 0);
+
+				if (!$resource->has()) {
+					$this->applyEvents($resource, $config);
+					$resource->create();
+				}
 
 				if ($resource->has()) {
 					if ($config->has('visibility') && $config->get('visibility') == 'public') {
