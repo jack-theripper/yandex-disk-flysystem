@@ -309,17 +309,20 @@ class Flysystem extends AbstractAdapter
 
 			$results = [];
 			$path = '';
-			foreach ($directories as $directory) {
+			foreach ($directories as $directory)
+			{
 				$path.= $directory . '/';
 				$fullPath = $this->applyPathPrefix($path);
 				$resource = $this->client->getResource($fullPath, 0);
 
-				if (!$resource->has()) {
+				if (!$resource->has())
+				{
 					$this->applyEvents($resource, $config);
 					$resource->create();
 				}
 
-				if ($resource->has()) {
+				if ($resource->has())
+				{
 					if ($config->has('visibility') && $config->get('visibility') == 'public') {
 						$resource->setPublish(true);
 					}
@@ -327,7 +330,8 @@ class Flysystem extends AbstractAdapter
 					$results[] = $this->normalizeResponse($resource);
 				}
 			}
-			if (sizeof($results) > 0) {
+			if (sizeof($results) > 0)
+			{
 				return $results;
 			}
 		}
