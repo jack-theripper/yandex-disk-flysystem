@@ -323,7 +323,8 @@ class Flysystem extends AbstractAdapter
 
 				if ($resource->has())
 				{
-					if ($config->has('visibility') && $config->get('visibility') == 'public') {
+					if ($config->has('visibility') && $config->get('visibility') == 'public')
+					{
 						$resource->setPublish(true);
 					}
 
