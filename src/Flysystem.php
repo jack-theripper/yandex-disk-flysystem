@@ -524,6 +524,25 @@ class Flysystem extends AbstractAdapter
 	}
 
 	/**
+	 * Get direct url of the published file.
+	 *
+	 * @param string $path
+	 *
+	 * @return string|false
+	 */
+	public function getDirectUrl($path)
+	{
+		$metadata = $this->getMetadata($path);
+
+		if (isset($metadata['file']))
+		{
+			return $metadata['file'];
+		}
+
+		return false;
+	}
+
+	/**
 	 * Get all the meta data of a file or directory.
 	 *
 	 * @param string $path
