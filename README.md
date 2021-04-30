@@ -76,6 +76,19 @@ $filesystem->write('path', 'contents', [
 ]);
 ```
 
+```php
+'yandex' => [
+            'driver' => 'yandex',
+            'access_token' => 'AQA*********',
+
+            // Optional Yandex Settings
+            //'prefix' => 'app:/',
+            //'visibility' => 'public',
+        ],
+```
+
+
+
 ## Лицензия (License)
 
 MIT License (MIT)
