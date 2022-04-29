@@ -10,7 +10,7 @@
  * @copyright  2016 Arhitector
  * @link       https://github.com/jack-theripper
  */
-namespace Arhitector\Yandex\Disk\Adapter;
+namespace traineratwot\Yandex\Disk\Adapter;
 
 use Arhitector\Yandex\Disk as Client;
 use laminas\Diactoros\Stream;

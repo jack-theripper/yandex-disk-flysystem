@@ -37,10 +37,10 @@ $client = new Arhitector\Yandex\Disk([string $accessToken]);
 $client->setAccessToken(string $accessToken);
 
 // create adapter
-$adapter = new Arhitector\Yandex\Disk\Adapter\Flysystem($client);
+$adapter = new traineratwot\Yandex\Disk\Adapter\Flysystem($client);
 
 // or with app folder
-$adapter = new Arhitector\Yandex\Disk\Adapter\Flysystem($client, Arhitector\Yandex\Disk\Adapter\Flysystem::PREFIX_APP);
+$adapter = new traineratwot\Yandex\Disk\Adapter\Flysystem($client, traineratwot\Yandex\Disk\Adapter\Flysystem::PREFIX_APP);
 
 // create Filesystem
 $filesystem = new League\Flysystem\Filesystem($adapter);
