@@ -13,12 +13,12 @@
 namespace Arhitector\Yandex\Disk\Adapter;
 
 use Arhitector\Yandex\Disk as Client;
+use laminas\Diactoros\Stream;
 use League\Flysystem\Adapter\AbstractAdapter;
 use League\Flysystem\Config;
 use League\Flysystem\FileExistsException;
 use League\Flysystem\FileNotFoundException;
 use League\Flysystem\Util;
-use Zend\Diactoros\Stream;
 
 /**
  * The flysystem adapter.
